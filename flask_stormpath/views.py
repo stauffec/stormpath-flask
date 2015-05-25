@@ -23,6 +23,8 @@ from .forms import (
 )
 from .models import User
 
+# Add libraries to support url parsing from google redirect
+import urllib,urlparse
 
 def register():
     """
@@ -395,6 +397,12 @@ def google_login():
     # Now we'll log the new user into their account.  From this point on, this
     # Google user will be treated exactly like a normal Stormpath user!
     login_user(account, remember=True)
+
+    # First check if redirect from google included a state parameter that contained the next url
+    if 'state' in request.args:
+        params = urlparse.parse_qs(urllib.unquote(request.args.get('state')))
+        if 'next' in params and len(params['next']) == 1:
+            return redirect(params['next'][0])
 
     return redirect(request.args.get('next') or current_app.config['STORMPATH_REDIRECT_URL'])
 
